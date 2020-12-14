@@ -4,28 +4,45 @@
 name: Upload Python Package
 
 on:
-  release:
-    types: [created]
+  push:
+    branches: 
+      - master
 
 jobs:
   deploy:
-
+    name: test and deploy flask app to S3 bucket
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
+    
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
-    - name: Install dependencies
+
+    - name: run unittest
       run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine
-    - name: Build and publish
+        pwd \
+        cd ./test/ \
+        python -m unittest ./test/test.py \
+        cd ..\
+        pwd \
+    
+    - name: make artifacts dir
+      run: mkdir ./artifacts/
+
+    - name: zip artifacts
+      run: zip -r ./artifacts/build.zip ./app/* appspec.yml
+
+    - name: deploy to s3
+      uses: jakejarvis/s3-sync-action@master
+      with:
+        args: --acl public-read --follow-symlinks --delete
       env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
+        AWS_S3_BUCKET: ${{secrets.AWS_PRODUCTION_BUCKET_NAME}}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_IAM_MANAGER_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_IAM_MANAGER_SECRET_ACCESS_KEY }}
+        AWS_REGION: ap-northeast-2
+        SOURCE_DIR: './artifacts'
+        DEST_DIR: 'backend/'
