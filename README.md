@@ -1,5 +1,6 @@
 # wookim_tistory
 
+# AWS CI/CD 구축 예제
 ## CI/CD 구축
 
 특이사항 
@@ -21,4 +22,4 @@ github action은
 도커 파일을 이용해 도커 컨테이너를 만들고 flask앱을 
 컨테이너에서 실행.
 
-
+### https://wookim789.tistory.com/39
